@@ -30,3 +30,13 @@ viewMenu.DropDownItems.Add(new ToolStripMenuItem("Показать панель 
 menuStrip.Items.AddRange(new ToolStripItem[] { fileMenu, editMenu, viewMenu });
 this.MainMenuStrip = menuStrip;
 this.Controls.Add(menuStrip);
+
+
+string ext = Path.GetExtension(sfd.FileName).ToLower();
+ImageFormat fmt;
+if (ext == ".png")
+    fmt = ImageFormat.Png;
+else if (ext == ".jpg" || ext == ".jpeg")
+    fmt = ImageFormat.Jpeg;
+else
+    fmt = ImageFormat.Bmp;
