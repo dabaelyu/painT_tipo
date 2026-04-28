@@ -1,0 +1,12 @@
+switch (cmbStyle.SelectedIndex)
+{
+    case 1:
+        dashStyle = DashStyle.Dash;
+        break;
+    case 2:
+        dashStyle = DashStyle.Dot;
+        break;
+    default:
+        dashStyle = DashStyle.Solid;
+        break;
+}
