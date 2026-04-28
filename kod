@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
 using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Windows.Forms;
 
-namespace SimplePaint
+namespace qqqwww_painT
 {
     public enum Tool { Pencil, Line, Rectangle, Ellipse, Fill, Eraser }
 
-    // PictureBox с включенной двойной буферизацией для предотвращения мерцания при предпросмотре
     public class DoubleBufferedPictureBox : PictureBox
     {
         public DoubleBufferedPictureBox()
@@ -21,7 +25,6 @@ namespace SimplePaint
 
     public class MainForm : Form
     {
-        // --- Поля состояния ---
         private Bitmap canvas;
         private Stack<Bitmap> undoStack = new Stack<Bitmap>();
         private Stack<Bitmap> redoStack = new Stack<Bitmap>();
@@ -36,7 +39,6 @@ namespace SimplePaint
         private float thickness = 2f;
         private DashStyle dashStyle = DashStyle.Solid;
 
-        // --- Элементы UI ---
         private DoubleBufferedPictureBox canvasBox;
         private MenuStrip menuStrip;
         private ToolStrip toolStrip;
@@ -47,40 +49,39 @@ namespace SimplePaint
         private ComboBox cmbStyle;
 
         public MainForm()
-        {            this.Text = "Simple Paint (.NET Framework)";
+        {
+            this.Text = "Simple Paint (.NET Framework)";
             this.Size = new Size(1050, 750);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.MinimumSize = new Size(800, 500);
 
             InitializeUI();
             NewCanvas();
-            SaveState(); // Сохраняем начальное состояние
+            SaveState(); 
         }
 
         private void InitializeUI()
         {
-            // 1. Главное меню
             menuStrip = new MenuStrip();
-            
+
             var fileMenu = new ToolStripMenuItem("Файл");
-            fileMenu.DropDownItems.Add("Новый", null, (s, e) => NewCanvas()).ShortcutKeys = Keys.Control | Keys.N;
-            fileMenu.DropDownItems.Add("Открыть", null, (s, e) => OpenFile()).ShortcutKeys = Keys.Control | Keys.O;
-            fileMenu.DropDownItems.Add("Сохранить", null, (s, e) => SaveFile()).ShortcutKeys = Keys.Control | Keys.S;
+            fileMenu.DropDownItems.Add(new ToolStripMenuItem("Новый", null, (s, e) => NewCanvas()) { ShortcutKeys = Keys.Control | Keys.N });
+            fileMenu.DropDownItems.Add(new ToolStripMenuItem("Открыть", null, (s, e) => OpenFile()) { ShortcutKeys = Keys.Control | Keys.O });
+            fileMenu.DropDownItems.Add(new ToolStripMenuItem("Сохранить", null, (s, e) => SaveFile()) { ShortcutKeys = Keys.Control | Keys.S });
             fileMenu.DropDownItems.Add(new ToolStripSeparator());
-            fileMenu.DropDownItems.Add("Выход", null, (s, e) => this.Close());
+            fileMenu.DropDownItems.Add(new ToolStripMenuItem("Выход", null, (s, e) => this.Close()));
 
             var editMenu = new ToolStripMenuItem("Правка");
-            editMenu.DropDownItems.Add("Отменить", null, (s, e) => Undo()).ShortcutKeys = Keys.Control | Keys.Z;
-            editMenu.DropDownItems.Add("Повторить", null, (s, e) => Redo()).ShortcutKeys = Keys.Control | Keys.Y;
+            editMenu.DropDownItems.Add(new ToolStripMenuItem("Отменить", null, (s, e) => Undo()) { ShortcutKeys = Keys.Control | Keys.Z });
+            editMenu.DropDownItems.Add(new ToolStripMenuItem("Повторить", null, (s, e) => Redo()) { ShortcutKeys = Keys.Control | Keys.Y });
 
             var viewMenu = new ToolStripMenuItem("Вид");
-            viewMenu.DropDownItems.Add("Показать панель свойств", null, (s, e) => { propPanel.Visible = !propPanel.Visible; });
+            viewMenu.DropDownItems.Add(new ToolStripMenuItem("Показать панель свойств", null, (s, e) => { propPanel.Visible = !propPanel.Visible; }));
 
             menuStrip.Items.AddRange(new ToolStripItem[] { fileMenu, editMenu, viewMenu });
             this.MainMenuStrip = menuStrip;
             this.Controls.Add(menuStrip);
 
-            // 2. Панель инструментов
             toolStrip = new ToolStrip();
             toolStrip.Dock = DockStyle.Top;
             toolStrip.ImageScalingSize = new Size(24, 24);
@@ -96,8 +97,6 @@ namespace SimplePaint
             SetTool(Tool.Pencil);
             this.Controls.Add(toolStrip);
 
-            // 3. Панель свойств            propPanel = new Panel { Dock = DockStyle.Right, Width = 220, BackColor = Color.FromArgb(240, 240, 240) };
-            
             btnForeColor = new Button { Text = "Передний цвет", Location = new Point(10, 10), Width = 200, Height = 30, BackColor = foreColor };
             btnForeColor.Click += (s, e) => {
                 using (var cd = new ColorDialog { Color = foreColor })
@@ -123,13 +122,23 @@ namespace SimplePaint
             cmbStyle.Items.AddRange(new object[] { "Сплошная", "Штриховая", "Пунктирная" });
             cmbStyle.SelectedIndex = 0;
             cmbStyle.SelectedIndexChanged += (s, e) => {
-                dashStyle = cmbStyle.SelectedIndex switch { 1 => DashStyle.Dash, 2 => DashStyle.Dot, _ => DashStyle.Solid };
+                switch (cmbStyle.SelectedIndex)
+                {
+                    case 1:
+                        dashStyle = DashStyle.Dash;
+                        break;
+                    case 2:
+                        dashStyle = DashStyle.Dot;
+                        break;
+                    default:
+                        dashStyle = DashStyle.Solid;
+                        break;
+                }
             };
 
             propPanel.Controls.AddRange(new Control[] { btnForeColor, btnBackColor, lblThick, nudThickness, lblStyle, cmbStyle });
             this.Controls.Add(propPanel);
 
-            // 4. Холст
             canvasBox = new DoubleBufferedPictureBox { Dock = DockStyle.Fill, BackColor = Color.LightGray, Cursor = Cursors.Cross };
             canvasBox.Paint += CanvasBox_Paint;
             canvasBox.MouseDown += CanvasBox_MouseDown;
@@ -143,7 +152,7 @@ namespace SimplePaint
             currentTool = t;
             for (int i = 0; i < toolButtons.Length; i++)
                 toolButtons[i].Checked = (i == (int)t);
-            
+
             canvasBox.Cursor = t == Tool.Fill ? Cursors.Hand : Cursors.Cross;
         }
         private void CanvasBox_Paint(object sender, PaintEventArgs e)
@@ -151,7 +160,6 @@ namespace SimplePaint
             if (canvas == null) return;
             e.Graphics.DrawImage(canvas, 0, 0);
 
-            // Предпросмотр фигур (без изменения основного холста)
             if (isDrawing && currentTool != Tool.Pencil && currentTool != Tool.Eraser && currentTool != Tool.Fill)
             {
                 using (Pen pen = CreatePen())
@@ -192,7 +200,7 @@ namespace SimplePaint
                 return;
             }
 
-            SaveState(); // Сохраняем состояние перед началом рисования
+            SaveState();
         }
         private void CanvasBox_MouseMove(object sender, MouseEventArgs e)
         {
@@ -211,7 +219,7 @@ namespace SimplePaint
             }
             else if (currentTool == Tool.Line || currentTool == Tool.Rectangle || currentTool == Tool.Ellipse)
             {
-                canvasBox.Invalidate(); // Перерисовка для предпросмотра
+                canvasBox.Invalidate(); 
             }
         }
 
@@ -220,7 +228,6 @@ namespace SimplePaint
             if (!isDrawing) return;
             isDrawing = false;
 
-            // Фиксируем фигуры на холсте
             if (currentTool == Tool.Line || currentTool == Tool.Rectangle || currentTool == Tool.Ellipse)
             {
                 using (Graphics g = Graphics.FromImage(canvas))
@@ -236,18 +243,15 @@ namespace SimplePaint
                 }
                 canvasBox.Invalidate();
             }
-            // Для карандаша/ластика состояние уже сохраняется в MouseDown, но можно обновить стек здесь, если нужно
-            // Оставляем как есть: одно состояние = один штрих/фигура
         }
 
         private Pen CreatePen() => new Pen(foreColor, thickness) { DashStyle = dashStyle, StartCap = LineCap.Round, EndCap = LineCap.Round };
         private Rectangle GetRectangle() => Rectangle.FromLTRB(
             Math.Min(startPoint.X, currentPoint.X),
-            Math.Min(startPoint.Y, currentPoint.Y),            Math.Max(startPoint.X, currentPoint.X),
+            Math.Min(startPoint.Y, currentPoint.Y), Math.Max(startPoint.X, currentPoint.X),
             Math.Max(startPoint.Y, currentPoint.Y)
         );
 
-        // --- Заливка (Flood Fill) ---
         private void FloodFill(Point start)
         {
             Color target = canvas.GetPixel(start.X, start.Y);
@@ -274,7 +278,6 @@ namespace SimplePaint
             }
         }
 
-        // --- Undo / Redo ---
         private void SaveState()
         {
             if (canvas == null) return;
@@ -302,7 +305,6 @@ namespace SimplePaint
             }
         }
 
-        // --- Файловые операции ---
         private void NewCanvas()
         {
             canvas = new Bitmap(canvasBox.ClientSize.Width, canvasBox.ClientSize.Height);
@@ -341,15 +343,18 @@ namespace SimplePaint
         {
             using (var sfd = new SaveFileDialog { Filter = "PNG|*.png|JPEG|*.jpg|BMP|*.bmp", Title = "Сохранить изображение" })
             {
-                if (sfd.ShowDialog() == DialogResult.OK)                {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
                     try
                     {
-                        ImageFormat fmt = Path.GetExtension(sfd.FileName).ToLower() switch
-                        {
-                            ".png" => ImageFormat.Png,
-                            ".jpg" or ".jpeg" => ImageFormat.Jpeg,
-                            _ => ImageFormat.Bmp
-                        };
+                        string ext = Path.GetExtension(sfd.FileName).ToLower();
+                        ImageFormat fmt;
+                        if (ext == ".png")
+                            fmt = ImageFormat.Png;
+                        else if (ext == ".jpg" || ext == ".jpeg")
+                            fmt = ImageFormat.Jpeg;
+                        else
+                            fmt = ImageFormat.Bmp;
                         canvas.Save(sfd.FileName, fmt);
                     }
                     catch (Exception ex)
@@ -361,14 +366,4 @@ namespace SimplePaint
         }
     }
 
-    static class Program
-    {
-        [STAThread]
-        static void Main()
-        {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
-        }
-    }
 }
