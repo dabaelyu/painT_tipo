@@ -10,3 +10,23 @@ switch (cmbStyle.SelectedIndex)
         dashStyle = DashStyle.Solid;
         break;
 }
+// 1. Главное меню
+menuStrip = new MenuStrip();
+
+var fileMenu = new ToolStripMenuItem("Файл");
+fileMenu.DropDownItems.Add(new ToolStripMenuItem("Новый", null, (s, e) => NewCanvas()) { ShortcutKeys = Keys.Control | Keys.N });
+fileMenu.DropDownItems.Add(new ToolStripMenuItem("Открыть", null, (s, e) => OpenFile()) { ShortcutKeys = Keys.Control | Keys.O });
+fileMenu.DropDownItems.Add(new ToolStripMenuItem("Сохранить", null, (s, e) => SaveFile()) { ShortcutKeys = Keys.Control | Keys.S });
+fileMenu.DropDownItems.Add(new ToolStripSeparator());
+fileMenu.DropDownItems.Add(new ToolStripMenuItem("Выход", null, (s, e) => this.Close()));
+
+var editMenu = new ToolStripMenuItem("Правка");
+editMenu.DropDownItems.Add(new ToolStripMenuItem("Отменить", null, (s, e) => Undo()) { ShortcutKeys = Keys.Control | Keys.Z });
+editMenu.DropDownItems.Add(new ToolStripMenuItem("Повторить", null, (s, e) => Redo()) { ShortcutKeys = Keys.Control | Keys.Y });
+
+var viewMenu = new ToolStripMenuItem("Вид");
+viewMenu.DropDownItems.Add(new ToolStripMenuItem("Показать панель свойств", null, (s, e) => { propPanel.Visible = !propPanel.Visible; }));
+
+menuStrip.Items.AddRange(new ToolStripItem[] { fileMenu, editMenu, viewMenu });
+this.MainMenuStrip = menuStrip;
+this.Controls.Add(menuStrip);
