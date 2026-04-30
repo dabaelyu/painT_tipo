@@ -32,6 +32,40 @@ this.MainMenuStrip = menuStrip;
 this.Controls.Add(menuStrip);
 
 
+
+@startuml
+title ER-диаграмма: Библиотека
+
+entity "Читатель" as читатель {
+  * id : int <<PK>>
+  --
+  имя : varchar(100)
+  телефон : varchar(20)
+  дата_регистрации : date
+}
+
+entity "Книга" as книга {
+  * id : int <<PK>>
+  --
+  название : varchar(200)
+  автор : varchar(100)
+  год_издания : int
+  на_полке : boolean
+}
+
+entity "Выдача" as выдача {
+  * id : int <<PK>>
+  * читатель_id : int <<FK>>
+  * книга_id : int <<FK>>
+  --
+  дата_выдачи : date
+  срок_возврата : date
+}
+
+' Связи (один ко многим)
+читатель ||--o{ выдача : "оформляет"
+книга ||--o{ выдача : "выдаётся"
+@enduml
 string ext = Path.GetExtension(sfd.FileName).ToLower();
 ImageFormat fmt;
 if (ext == ".png")
