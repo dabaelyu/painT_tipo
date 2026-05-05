@@ -74,3 +74,18 @@ else if (ext == ".jpg" || ext == ".jpeg")
     fmt = ImageFormat.Jpeg;
 else
     fmt = ImageFormat.Bmp;
+
+
+
+private void SetTool(Tool t)
+{
+    currentTool = t;
+    for (int i = 0; i < toolButtons.Length; i++)
+        toolButtons[i].Checked = (i == (int)t);
+    
+    // ✅ Безопасная замена, компилируется в любой версии C#
+    if (t == Tool.Fill)
+        canvasBox.Cursor = System.Windows.Forms.Cursors.Hand;
+    else
+        canvasBox.Cursor = System.Windows.Forms.Cursors.Cross;
+}
