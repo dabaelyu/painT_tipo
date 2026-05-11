@@ -37,7 +37,7 @@ namespace painT_qqqwww
 
         public MainForm()
         {
-            this.Text = "зфште";
+            this.Text = "paint";
             this.Size = new Size(1050, 750);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.MinimumSize = new Size(800, 500);
